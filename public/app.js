@@ -45,9 +45,16 @@ async function loadPredictions() {
         vehicles: mapData.vehicles || []
       };
 
-      if (selectedStopId && openInlineMap?.wrap) {
-        const inlineMapRoot = openInlineMap.wrap.querySelector(".inline-map");
-        renderMapForStop(selectedStopId, openInlineMap.wrap, inlineMapRoot);
+      if (selectedStopId && openInlineMap) {
+        const currentCard = Array.from(board.querySelectorAll(".stop-card")).find((card) =>
+          card.querySelector(".stop-id")?.textContent?.includes(selectedStopId)
+        );
+        const currentWrap = currentCard?.querySelector(".inline-map-wrap");
+        const currentRoot = currentCard?.querySelector(".inline-map");
+
+        if (currentWrap && currentRoot) {
+          renderMapForStop(selectedStopId, currentWrap, currentRoot);
+        }
       }
     }
   } catch (error) {
@@ -119,8 +126,8 @@ function buildPrediction(stopId, prediction) {
 
   card.innerHTML = `
     <div>
-      <p class="prediction-route">${route}</p>
-      <p class="prediction-meta">${headsign}${vehicleId ? ` • Bus ${vehicleId}` : ""}</p>
+      <p class="prediction-route">${route}${headsign ? ` • ${headsign}` : ""}</p>
+      <p class="prediction-meta">${vehicleId ? `Bus ${vehicleId}` : ""}</p>
       ${buildWalkWarningForStop(stopId, prediction.minutes)}
     </div>
     <div class="prediction-minutes">
@@ -147,15 +154,17 @@ function renderMapForStop(stopId, inlineMapWrap, inlineMapRoot) {
     : [];
 
   if (openInlineMap && openInlineMap.wrap !== inlineMapWrap) {
-    openInlineMap.wrap.classList.add("is-hidden");
-    if (openInlineMap.instance) {
+    if (openInlineMap.wrap?.isConnected) {
+      openInlineMap.wrap.classList.add("is-hidden");
+    }
+    if (openInlineMap.instance && typeof openInlineMap.instance.remove === "function") {
       openInlineMap.instance.remove();
     }
   }
 
   if (openInlineMap && openInlineMap.wrap === inlineMapWrap && !inlineMapWrap.classList.contains("is-hidden")) {
     inlineMapWrap.classList.add("is-hidden");
-    if (openInlineMap.instance) {
+    if (openInlineMap.instance && typeof openInlineMap.instance.remove === "function") {
       openInlineMap.instance.remove();
     }
     openInlineMap = null;

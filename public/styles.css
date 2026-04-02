@@ -543,6 +543,9 @@ body {
   .prediction-route {
     font-size: 1rem;
     line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .prediction-meta {
