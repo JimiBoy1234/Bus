@@ -332,26 +332,46 @@ function createBusIcon(vehicle) {
     className: "",
     html: `
       <div class="bus-icon" style="transform: rotate(${rotation}deg); transform-origin: 50% 50%;">
-        <svg viewBox="0 0 44 44" aria-hidden="true">
-          <g transform="translate(22 22)">
+        <svg viewBox="0 0 52 52" aria-hidden="true">
+          <g transform="translate(26 26)">
             <path
-              d="M 0 -18 L 12 -6 L 12 10 C 12 14 9 17 5 17 L -5 17 C -9 17 -12 14 -12 10 L -12 -6 Z"
-              fill="#c84c09"
-              stroke="#132a13"
+              d="M 0 -22 L 5 -14 H -5 Z"
+              fill="#3d2a22"
+            />
+            <path
+              d="M 0 -16 C 9 -16 16 -10 16 0 V 10 C 16 16 11 20 5 20 H -5 C -11 20 -16 16 -16 10 V 0 C -16 -10 -9 -16 0 -16 Z"
+              fill="#ffe8cb"
+              stroke="#3d2a22"
               stroke-width="2"
             />
             <path
-              d="M -7 -4 H 7 V 5 H -7 Z"
-              fill="#fffaf0"
+              d="M -11 0 C -11 -7 -6 -11 0 -11 C 6 -11 11 -7 11 0 V 6 H -11 Z"
+              fill="#ffd8c8"
             />
-            <circle cx="-6" cy="13" r="3" fill="#132a13" />
-            <circle cx="6" cy="13" r="3" fill="#132a13" />
-            <path d="M 0 -20 L 4 -12 H -4 Z" fill="#132a13" />
+            <path
+              d="M -10 -13 L -4 -20 L -1 -12 Z"
+              fill="#ffe8cb"
+              stroke="#3d2a22"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M 10 -13 L 4 -20 L 1 -12 Z"
+              fill="#ffe8cb"
+              stroke="#3d2a22"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+            <circle cx="-5.5" cy="-1" r="2" fill="#3d2a22" />
+            <circle cx="5.5" cy="-1" r="2" fill="#3d2a22" />
+            <path d="M -2 5 C 0 7 2 7 4 5" fill="none" stroke="#f4a8a1" stroke-width="2.5" stroke-linecap="round" />
+            <circle cx="-9" cy="16" r="3.2" fill="#3d2a22" />
+            <circle cx="9" cy="16" r="3.2" fill="#3d2a22" />
             <text
               x="0"
-              y="1"
+              y="12"
               text-anchor="middle"
-              fill="#132a13"
+              fill="#3d2a22"
               class="bus-icon-label"
               transform="rotate(${rotation * -1})"
             >${routeLabel}</text>
@@ -359,9 +379,9 @@ function createBusIcon(vehicle) {
         </svg>
       </div>
     `,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-    popupAnchor: [0, -16]
+    iconSize: [42, 42],
+    iconAnchor: [21, 21],
+    popupAnchor: [0, -18]
   });
 }
 
