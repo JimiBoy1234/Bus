@@ -1,5 +1,8 @@
 const board = document.getElementById("board");
 const mapRoot = document.getElementById("bus-map");
+const mapSection = document.getElementById("map-section");
+const mapTitle = document.getElementById("map-title");
+const mapSubtitle = document.getElementById("map-subtitle");
 const statusPill = document.getElementById("status-pill");
 const refreshButton = document.getElementById("refresh-button");
 const stopTemplate = document.getElementById("stop-template");
@@ -9,9 +12,10 @@ const MAP_RADIUS_MILES = 2;
 let map;
 let stopMarkers = [];
 let vehicleMarkers = [];
+let latestMapData = { stops: [], vehicles: [] };
+let selectedStopId = null;
 
 refreshButton.addEventListener("click", () => {
-  wiggleCatTail();
   loadPredictions();
 });
 
@@ -37,7 +41,14 @@ async function loadPredictions() {
     statusPill.textContent = `Updated ${formatTimestamp(predictionData.updatedAt)}`;
 
     if (mapResponse.ok) {
-      renderMap(mapData.stops || [], mapData.vehicles || []);
+      latestMapData = {
+        stops: mapData.stops || [],
+        vehicles: mapData.vehicles || []
+      };
+
+      if (selectedStopId) {
+        renderMapForStop(selectedStopId);
+      }
     } else if (mapRoot) {
       mapRoot.innerHTML =
         '<div class="empty-state">Live map unavailable. Make sure WMATA Bus Route and Stop Methods is enabled for this API key.</div>';
@@ -55,12 +66,23 @@ async function loadPredictions() {
 
 function renderStops(stops) {
   board.innerHTML = "";
+  const soonestStopId = getSoonestStopId(stops);
 
   for (const stop of stops) {
     const fragment = stopTemplate.content.cloneNode(true);
     fragment.querySelector(".stop-label").textContent = "Bus Stop";
     fragment.querySelector(".stop-name").textContent = stop.name;
+    const stopNote = fragment.querySelector(".stop-note");
+    const noteText = getStopNote(stop.id);
+    stopNote.textContent = noteText;
+    stopNote.hidden = !noteText;
     fragment.querySelector(".stop-id").textContent = `Stop ${stop.id}`;
+    const card = fragment.querySelector(".stop-card");
+    const mapButton = fragment.querySelector(".map-link");
+
+    if (stop.id === soonestStopId) {
+      card.classList.add("is-soonest");
+    }
 
     const predictionList = fragment.querySelector(".prediction-list");
 
@@ -72,6 +94,11 @@ function renderStops(stops) {
         predictionList.appendChild(buildPrediction(prediction));
       }
     }
+
+    mapButton.addEventListener("click", () => {
+      selectedStopId = stop.id;
+      renderMapForStop(stop.id);
+    });
 
     board.appendChild(fragment);
   }
@@ -100,7 +127,28 @@ function buildPrediction(prediction) {
   return card;
 }
 
-function renderMap(stops, vehicles) {
+function renderMapForStop(stopId) {
+  const stop = latestMapData.stops.find((item) => item.id === stopId);
+
+  if (!stop) {
+    return;
+  }
+
+  const predictionCard = Array.from(board.querySelectorAll(".stop-card")).find((card) =>
+    card.querySelector(".stop-id")?.textContent?.includes(stopId)
+  );
+  const routeIds = predictionCard
+    ? Array.from(predictionCard.querySelectorAll(".prediction-route")).map((item) => item.textContent.trim())
+    : [];
+
+  renderMap(
+    latestMapData.stops,
+    latestMapData.vehicles.filter((vehicle) => routeIds.includes(String(vehicle.routeId || "").trim())),
+    stop
+  );
+}
+
+function renderMap(stops, vehicles, focusStop) {
   if (!mapRoot || typeof L === "undefined") {
     return;
   }
@@ -127,10 +175,10 @@ function renderMap(stops, vehicles) {
 
   stopMarkers = validStops.map((stop) => {
     const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: 10,
-      color: "#132a13",
+      radius: stop.id === focusStop.id ? 12 : 9,
+      color: stop.id === focusStop.id ? "#22723a" : "#3d2a22",
       weight: 2,
-      fillColor: "#fffaf0",
+      fillColor: stop.id === focusStop.id ? "#d3f0d8" : "#fffdf9",
       fillOpacity: 1
     }).addTo(map);
 
@@ -143,7 +191,7 @@ function renderMap(stops, vehicles) {
 
   const visibleVehicles = vehicles.filter((vehicle) => Number.isFinite(vehicle.lat) && Number.isFinite(vehicle.lon));
   const nearbyVehicles = visibleVehicles.filter((vehicle) =>
-    validStops.some((stop) => distanceInMiles(stop.lat, stop.lon, vehicle.lat, vehicle.lon) <= MAP_RADIUS_MILES)
+    distanceInMiles(focusStop.lat, focusStop.lon, vehicle.lat, vehicle.lon) <= MAP_RADIUS_MILES
   );
 
   vehicleMarkers = nearbyVehicles.map((vehicle) => {
@@ -155,13 +203,19 @@ function renderMap(stops, vehicles) {
     return marker;
   });
 
-  const bounds = L.latLngBounds(validStops.map((stop) => [stop.lat, stop.lon]));
-
+  const bounds = L.latLngBounds([[focusStop.lat, focusStop.lon]]);
   nearbyVehicles.forEach((vehicle) => {
     bounds.extend([vehicle.lat, vehicle.lon]);
   });
 
   map.fitBounds(bounds.pad(0.22));
+  mapSection?.classList.remove("is-hidden");
+  if (mapTitle) {
+    mapTitle.textContent = `${focusStop.name} on the map`;
+  }
+  if (mapSubtitle) {
+    mapSubtitle.textContent = "Showing nearby live buses for the selected stop and its active route predictions.";
+  }
 }
 
 function buildVehiclePopup(vehicle) {
@@ -181,18 +235,48 @@ function clearMarkers(markers) {
   markers.forEach((marker) => marker.remove());
 }
 
-function wiggleCatTail() {
-  if (!refreshButton) {
-    return;
+function getSoonestStopId(stops) {
+  let soonest = null;
+
+  for (const stop of stops) {
+    const nextMinutes = stop.predictions
+      .map((prediction) => normalizeMinutes(prediction.minutes))
+      .filter((value) => value !== null)
+      .sort((a, b) => a - b)[0];
+
+    if (nextMinutes === undefined) {
+      continue;
+    }
+
+    if (!soonest || nextMinutes < soonest.minutes) {
+      soonest = { id: stop.id, minutes: nextMinutes };
+    }
   }
 
-  refreshButton.classList.remove("is-wiggling");
-  void refreshButton.offsetWidth;
-  refreshButton.classList.add("is-wiggling");
+  return soonest?.id || null;
+}
 
-  window.setTimeout(() => {
-    refreshButton.classList.remove("is-wiggling");
-  }, 500);
+function normalizeMinutes(value) {
+  const text = String(value || "").trim().toLowerCase();
+
+  if (!text) {
+    return null;
+  }
+
+  if (text === "arr" || text === "brd") {
+    return 0;
+  }
+
+  const parsed = Number.parseInt(text, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getStopNote(stopId) {
+  if (stopId === "4000296") {
+    return "(going to braddock)";
+  }
+
+  return "";
 }
 
 function createBusIcon(vehicle) {

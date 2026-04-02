@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ANW Bus Stops, Next Buses</title>
+    <title>A&amp;W Bus Stops - Next Buses</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -21,11 +21,10 @@
   <body>
     <main class="shell">
       <section class="hero">
-        <h1>ANW Bus Stops, Next Buses</h1>
+        <h1>A&amp;W Bus Stops - Next Buses</h1>
         <div class="meta">
           <span id="status-pill" class="pill">Loading live data...</span>
           <button id="refresh-button" class="refresh-button cat-button" type="button" aria-label="Refresh now">
-            <span class="cat-tail" aria-hidden="true"></span>
             <span class="cat-face" aria-hidden="true">
               <span class="cat-ears"></span>
               <span class="cat-eyes"></span>
@@ -36,14 +35,11 @@
         </div>
       </section>
 
-      <section class="map-section">
+      <section id="map-section" class="map-section is-hidden">
         <div class="map-card">
           <div class="map-copy">
-            <h2>Live Bus Map</h2>
-            <p>
-              Stop markers are fixed. Bus markers are live WMATA vehicle positions for the routes
-              currently serving these stops.
-            </p>
+            <h2 id="map-title">Live Bus Map</h2>
+            <p id="map-subtitle">Showing buses for the selected stop.</p>
           </div>
           <div id="bus-map" class="bus-map" aria-label="Live bus map"></div>
         </div>
@@ -60,10 +56,12 @@
           <div>
             <p class="stop-label"></p>
             <h2 class="stop-name"></h2>
+            <p class="stop-note"></p>
           </div>
           <div class="stop-id"></div>
         </div>
         <div class="prediction-list"></div>
+        <button class="map-link" type="button">View on map</button>
       </article>
     </template>
 
