@@ -1,19 +1,13 @@
 const board = document.getElementById("board");
-const mapRoot = document.getElementById("bus-map");
-const mapSection = document.getElementById("map-section");
-const mapTitle = document.getElementById("map-title");
-const mapSubtitle = document.getElementById("map-subtitle");
 const statusPill = document.getElementById("status-pill");
 const refreshButton = document.getElementById("refresh-button");
 const stopTemplate = document.getElementById("stop-template");
 
 const REFRESH_INTERVAL_MS = 30000;
 const MAP_RADIUS_MILES = 2;
-let map;
-let stopMarkers = [];
-let vehicleMarkers = [];
 let latestMapData = { stops: [], vehicles: [] };
 let selectedStopId = null;
+let openInlineMap = null;
 
 refreshButton.addEventListener("click", () => {
   loadPredictions();
@@ -49,15 +43,9 @@ async function loadPredictions() {
       if (selectedStopId) {
         renderMapForStop(selectedStopId);
       }
-    } else if (mapRoot) {
-      mapRoot.innerHTML =
-        '<div class="empty-state">Live map unavailable. Make sure WMATA Bus Route and Stop Methods is enabled for this API key.</div>';
     }
   } catch (error) {
     board.innerHTML = `<div class="empty-state">Unable to load WMATA data. ${escapeHtml(error.message)}</div>`;
-    if (mapRoot) {
-      mapRoot.innerHTML = '<div class="empty-state">Map unavailable right now.</div>';
-    }
     statusPill.textContent = "Live data unavailable";
   } finally {
     refreshButton.disabled = false;
@@ -66,7 +54,7 @@ async function loadPredictions() {
 
 function renderStops(stops) {
   board.innerHTML = "";
-  const soonestStopId = getSoonestStopId(stops);
+  const soonest = getSoonestPrediction(stops);
 
   for (const stop of stops) {
     const fragment = stopTemplate.content.cloneNode(true);
@@ -79,10 +67,8 @@ function renderStops(stops) {
     fragment.querySelector(".stop-id").textContent = `Stop ${stop.id}`;
     const card = fragment.querySelector(".stop-card");
     const mapButton = fragment.querySelector(".map-link");
-
-    if (stop.id === soonestStopId) {
-      card.classList.add("is-soonest");
-    }
+    const inlineMapWrap = fragment.querySelector(".inline-map-wrap");
+    const inlineMapRoot = fragment.querySelector(".inline-map");
 
     const predictionList = fragment.querySelector(".prediction-list");
 
@@ -91,13 +77,17 @@ function renderStops(stops) {
         '<div class="empty-state">No active arrival predictions right now.</div>';
     } else {
       for (const prediction of stop.predictions.slice(0, 4)) {
-        predictionList.appendChild(buildPrediction(prediction));
+        const predictionCard = buildPrediction(prediction);
+        if (soonest && stop.id === soonest.stopId && prediction.vehicleId === soonest.vehicleId && prediction.routeId === soonest.routeId) {
+          predictionCard.classList.add("is-soonest");
+        }
+        predictionList.appendChild(predictionCard);
       }
     }
 
     mapButton.addEventListener("click", () => {
       selectedStopId = stop.id;
-      renderMapForStop(stop.id);
+      renderMapForStop(stop.id, inlineMapWrap, inlineMapRoot);
     });
 
     board.appendChild(fragment);
@@ -127,10 +117,10 @@ function buildPrediction(prediction) {
   return card;
 }
 
-function renderMapForStop(stopId) {
+function renderMapForStop(stopId, inlineMapWrap, inlineMapRoot) {
   const stop = latestMapData.stops.find((item) => item.id === stopId);
 
-  if (!stop) {
+  if (!stop || !inlineMapWrap || !inlineMapRoot) {
     return;
   }
 
@@ -141,14 +131,32 @@ function renderMapForStop(stopId) {
     ? Array.from(predictionCard.querySelectorAll(".prediction-route")).map((item) => item.textContent.trim())
     : [];
 
-  renderMap(
+  if (openInlineMap && openInlineMap.wrap !== inlineMapWrap) {
+    openInlineMap.wrap.classList.add("is-hidden");
+    if (openInlineMap.instance) {
+      openInlineMap.instance.remove();
+    }
+  }
+
+  if (openInlineMap && openInlineMap.wrap === inlineMapWrap && !inlineMapWrap.classList.contains("is-hidden")) {
+    inlineMapWrap.classList.add("is-hidden");
+    if (openInlineMap.instance) {
+      openInlineMap.instance.remove();
+    }
+    openInlineMap = null;
+    return;
+  }
+
+  inlineMapWrap.classList.remove("is-hidden");
+  renderInlineMap(
+    inlineMapRoot,
     latestMapData.stops,
     latestMapData.vehicles.filter((vehicle) => routeIds.includes(String(vehicle.routeId || "").trim())),
     stop
   );
 }
 
-function renderMap(stops, vehicles, focusStop) {
+function renderInlineMap(mapRoot, stops, vehicles, focusStop) {
   if (!mapRoot || typeof L === "undefined") {
     return;
   }
@@ -160,22 +168,19 @@ function renderMap(stops, vehicles, focusStop) {
     return;
   }
 
-  if (!map) {
-    map = L.map(mapRoot, {
-      scrollWheelZoom: false
-    });
+  mapRoot.innerHTML = "";
+  const map = L.map(mapRoot, {
+    scrollWheelZoom: false,
+    zoomControl: false
+  });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(map);
-  }
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
 
-  clearMarkers(stopMarkers);
-  clearMarkers(vehicleMarkers);
-
-  stopMarkers = validStops.map((stop) => {
+  const stopMarkers = validStops.map((stop) => {
     const marker = L.circleMarker([stop.lat, stop.lon], {
-      radius: stop.id === focusStop.id ? 12 : 9,
+      radius: stop.id === focusStop.id ? 12 : 7,
       color: stop.id === focusStop.id ? "#22723a" : "#3d2a22",
       weight: 2,
       fillColor: stop.id === focusStop.id ? "#d3f0d8" : "#fffdf9",
@@ -194,7 +199,7 @@ function renderMap(stops, vehicles, focusStop) {
     distanceInMiles(focusStop.lat, focusStop.lon, vehicle.lat, vehicle.lon) <= MAP_RADIUS_MILES
   );
 
-  vehicleMarkers = nearbyVehicles.map((vehicle) => {
+  const vehicleMarkers = nearbyVehicles.map((vehicle) => {
     const marker = L.marker([vehicle.lat, vehicle.lon], {
       icon: createBusIcon(vehicle)
     }).addTo(map);
@@ -203,19 +208,25 @@ function renderMap(stops, vehicles, focusStop) {
     return marker;
   });
 
-  const bounds = L.latLngBounds([[focusStop.lat, focusStop.lon]]);
-  nearbyVehicles.forEach((vehicle) => {
-    bounds.extend([vehicle.lat, vehicle.lon]);
-  });
+  if (!vehicleMarkers.length) {
+    map.setView([focusStop.lat, focusStop.lon], 15);
+  } else {
+    const bounds = L.latLngBounds([[focusStop.lat, focusStop.lon]]);
+    nearbyVehicles.forEach((vehicle) => {
+      bounds.extend([vehicle.lat, vehicle.lon]);
+    });
 
-  map.fitBounds(bounds.pad(0.22));
-  mapSection?.classList.remove("is-hidden");
-  if (mapTitle) {
-    mapTitle.textContent = `${focusStop.name} on the map`;
+    map.fitBounds(bounds.pad(0.12), { maxZoom: 15 });
   }
-  if (mapSubtitle) {
-    mapSubtitle.textContent = "Showing nearby live buses for the selected stop and its active route predictions.";
-  }
+
+  window.setTimeout(() => {
+    map.invalidateSize();
+  }, 0);
+
+  openInlineMap = {
+    wrap: inlineMapRoot.closest(".inline-map-wrap"),
+    instance: map
+  };
 }
 
 function buildVehiclePopup(vehicle) {
@@ -231,29 +242,29 @@ function buildVehiclePopup(vehicle) {
   return lines.join("<br />");
 }
 
-function clearMarkers(markers) {
-  markers.forEach((marker) => marker.remove());
-}
-
-function getSoonestStopId(stops) {
+function getSoonestPrediction(stops) {
   let soonest = null;
 
   for (const stop of stops) {
-    const nextMinutes = stop.predictions
-      .map((prediction) => normalizeMinutes(prediction.minutes))
-      .filter((value) => value !== null)
-      .sort((a, b) => a - b)[0];
+    for (const prediction of stop.predictions) {
+      const minutes = normalizeMinutes(prediction.minutes);
 
-    if (nextMinutes === undefined) {
-      continue;
-    }
+      if (minutes === null) {
+        continue;
+      }
 
-    if (!soonest || nextMinutes < soonest.minutes) {
-      soonest = { id: stop.id, minutes: nextMinutes };
+      if (!soonest || minutes < soonest.minutes) {
+        soonest = {
+          stopId: stop.id,
+          routeId: prediction.routeId,
+          vehicleId: prediction.vehicleId,
+          minutes
+        };
+      }
     }
   }
 
-  return soonest?.id || null;
+  return soonest;
 }
 
 function normalizeMinutes(value) {

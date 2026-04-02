@@ -35,16 +35,6 @@
         </div>
       </section>
 
-      <section id="map-section" class="map-section is-hidden">
-        <div class="map-card">
-          <div class="map-copy">
-            <h2 id="map-title">Live Bus Map</h2>
-            <p id="map-subtitle">Showing buses for the selected stop.</p>
-          </div>
-          <div id="bus-map" class="bus-map" aria-label="Live bus map"></div>
-        </div>
-      </section>
-
       <section>
         <div id="board" class="board" aria-live="polite"></div>
       </section>
@@ -62,6 +52,13 @@
         </div>
         <div class="prediction-list"></div>
         <button class="map-link" type="button">View on map</button>
+        <div class="inline-map-wrap is-hidden">
+          <div class="inline-map-copy">
+            <p class="inline-map-title">Nearby live buses</p>
+            <p class="inline-map-subtitle">Focused on this stop and its active routes.</p>
+          </div>
+          <div class="inline-map"></div>
+        </div>
       </article>
     </template>
 
