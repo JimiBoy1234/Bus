@@ -451,13 +451,14 @@ body {
   }
 
   .meta {
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
+    gap: 10px;
   }
 
   .pill,
   .refresh-button {
-    width: 100%;
+    width: calc(50% - 5px);
     text-align: center;
   }
 
@@ -481,7 +482,8 @@ body {
 
   .prediction {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 6px;
+    padding: 12px 14px;
   }
 
   .prediction-minutes {
@@ -489,6 +491,31 @@ body {
   }
 
   .minutes-value {
-    font-size: 1.45rem;
+    display: inline;
+    font-size: 1.2rem;
+  }
+
+  .minutes-label {
+    display: inline;
+    margin-top: 0;
+    margin-left: 6px;
+    font-size: 0.78rem;
+  }
+
+  .prediction-route {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+
+  .prediction-meta {
+    margin-top: 2px;
+    font-size: 0.82rem;
+    line-height: 1.2;
+  }
+
+  .prediction-warning {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    line-height: 1.2;
   }
 }

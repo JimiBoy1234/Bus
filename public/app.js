@@ -5,6 +5,7 @@ const stopTemplate = document.getElementById("stop-template");
 
 const REFRESH_INTERVAL_MS = 30000;
 const MAP_RADIUS_MILES = 2;
+const MOBILE_MEDIA = window.matchMedia("(max-width: 640px)");
 let latestMapData = { stops: [], vehicles: [] };
 let selectedStopId = null;
 let openInlineMap = null;
@@ -15,6 +16,9 @@ refreshButton.addEventListener("click", () => {
 
 loadPredictions();
 setInterval(loadPredictions, REFRESH_INTERVAL_MS);
+MOBILE_MEDIA.addEventListener("change", () => {
+  loadPredictions();
+});
 
 async function loadPredictions() {
   statusPill.textContent = "Refreshing live data...";
@@ -80,8 +84,8 @@ function renderStops(stops) {
       predictionList.innerHTML =
         '<div class="empty-state">No active arrival predictions right now.</div>';
     } else {
-      stop.predictions.slice(0, 4).forEach((prediction, index) => {
-        const predictionCard = buildPrediction(prediction);
+      stop.predictions.slice(0, getVisiblePredictionCount()).forEach((prediction, index) => {
+        const predictionCard = buildPrediction(stop.id, prediction);
         if (soonest && stop.id === soonest.stopId && index === soonest.predictionIndex) {
           predictionCard.classList.add("is-soonest");
         }
@@ -98,7 +102,7 @@ function renderStops(stops) {
   }
 }
 
-function buildPrediction(prediction) {
+function buildPrediction(stopId, prediction) {
   const card = document.createElement("div");
   card.className = "prediction";
 
@@ -111,7 +115,7 @@ function buildPrediction(prediction) {
     <div>
       <p class="prediction-route">${route}</p>
       <p class="prediction-meta">${headsign}${vehicleId ? ` • Bus ${vehicleId}` : ""}</p>
-      ${buildWalkWarning(prediction.minutes)}
+      ${buildWalkWarningForStop(stopId, prediction.minutes)}
     </div>
     <div class="prediction-minutes">
       <span class="minutes-value">${minutes.value}</span>
@@ -251,7 +255,11 @@ function getSoonestPrediction(stops) {
   let soonest = null;
 
   for (const stop of stops) {
-    stop.predictions.slice(0, 4).forEach((prediction, index) => {
+    if (isExcludedFromWalkLogic(stop.id)) {
+      continue;
+    }
+
+    stop.predictions.slice(0, getVisiblePredictionCount()).forEach((prediction, index) => {
       const minutes = normalizeMinutes(prediction.minutes);
 
       if (minutes === null || minutes < 6) {
@@ -272,6 +280,14 @@ function getSoonestPrediction(stops) {
 }
 
 function buildWalkWarning(minutesValue) {
+  return buildWalkWarningForStop(null, minutesValue);
+}
+
+function buildWalkWarningForStop(stopId, minutesValue) {
+  if (stopId && isExcludedFromWalkLogic(stopId)) {
+    return "";
+  }
+
   const minutes = normalizeMinutes(minutesValue);
 
   if (minutes === null || minutes >= 6) {
@@ -279,6 +295,14 @@ function buildWalkWarning(minutesValue) {
   }
 
   return '<p class="prediction-warning">* Not enough time to walk there.</p>';
+}
+
+function isExcludedFromWalkLogic(stopId) {
+  return stopId === "4000258";
+}
+
+function getVisiblePredictionCount() {
+  return MOBILE_MEDIA.matches ? 2 : 4;
 }
 
 function applyCatVariant(element, stopId) {
