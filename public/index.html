@@ -36,8 +36,11 @@
       </section>
 
       <section class="best-route-bar" aria-live="polite">
-        <p class="best-route-label">Your best route going to work is:</p>
-        <p id="best-route-value" class="best-route-value">Checking live arrivals...</p>
+        <span class="cat-sticker cat-sticker-sad" aria-hidden="true"></span>
+        <div>
+          <p class="best-route-label">Your best route going to work is:</p>
+          <p id="best-route-value" class="best-route-value">Checking live arrivals...</p>
+        </div>
       </section>
 
       <section>
@@ -45,9 +48,27 @@
       </section>
 
       <section class="dash-section">
-        <div class="best-route-bar" aria-live="polite">
-          <p class="best-route-label">Your best route coming home is:</p>
-          <p id="dash-comparison-value" class="best-route-value">Checking live arrivals...</p>
+        <div class="best-route-bar">
+          <span class="cat-sticker cat-sticker-happy" aria-hidden="true"></span>
+          <div class="best-route-content">
+            <div class="best-route-label-row">
+              <p class="best-route-label">Your best route coming home is:</p>
+              <button class="info-button" id="dash-info-toggle" type="button" aria-expanded="false" aria-controls="dash-info-panel">
+                <span aria-hidden="true">ⓘ</span>
+                <span class="sr-only">How this is calculated</span>
+              </button>
+            </div>
+            <p id="dash-comparison-value" class="best-route-value" aria-live="polite">Checking live arrivals...</p>
+          </div>
+        </div>
+        <div class="info-panel is-hidden" id="dash-info-panel">
+          <p class="info-panel-heading">How your best route home is calculated</p>
+          <p class="info-panel-body">All times are measured from right now. The option with the lower total gets you home soonest.</p>
+          <ul class="info-panel-list">
+            <li><strong>Potomac Yard (stop 4001111)</strong> — 5 min walk to stop + bus wait + 10 min ride home. Bus must be ≥ 5 min away to catch it.</li>
+            <li><strong>Braddock Road (stop 4000469)</strong> — 5 min extra on Metro + 3 min walk + bus wait + 20 min ride home. Bus must be ≥ 8 min away to catch it.</li>
+          </ul>
+          <p class="info-panel-formula">Total time home = bus arrival (min from now) + ride time</p>
         </div>
         <div id="dash-board" class="board" aria-live="polite"></div>
       </section>

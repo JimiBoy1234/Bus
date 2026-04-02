@@ -19,6 +19,15 @@ refreshButton.addEventListener("click", () => {
   loadPredictions();
 });
 
+const dashInfoToggle = document.getElementById("dash-info-toggle");
+const dashInfoPanel = document.getElementById("dash-info-panel");
+if (dashInfoToggle && dashInfoPanel) {
+  dashInfoToggle.addEventListener("click", () => {
+    const isHidden = dashInfoPanel.classList.toggle("is-hidden");
+    dashInfoToggle.setAttribute("aria-expanded", String(!isHidden));
+  });
+}
+
 
 loadPredictions();
 setInterval(loadPredictions, REFRESH_INTERVAL_MS);
@@ -526,6 +535,9 @@ function renderDashStops(stops) {
   const options = computeDashOptions(stops);
   updateDashComparison(options);
 
+  const catchable = options.filter((o) => o.catchable);
+  const bestOption = catchable.length ? catchable.reduce((a, b) => (a.totalMinutes <= b.totalMinutes ? a : b)) : null;
+
   for (const option of options) {
     const { stop, config, catchable, busWait, totalMinutes } = option;
     const fragment = stopTemplate.content.cloneNode(true);
@@ -548,7 +560,11 @@ function renderDashStops(stops) {
       predictionList.innerHTML = '<div class="empty-state">No active arrival predictions right now.</div>';
     } else {
       stop.predictions.slice(0, getVisiblePredictionCount()).forEach((prediction) => {
-        predictionList.appendChild(buildDashPrediction(prediction, config));
+        const card = buildDashPrediction(prediction, config);
+        if (bestOption && option.stopId === bestOption.stopId && prediction === option.nextBus) {
+          card.classList.add("is-soonest");
+        }
+        predictionList.appendChild(card);
       });
     }
 
