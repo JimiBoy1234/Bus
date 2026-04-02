@@ -331,9 +331,7 @@ function updateBestRoute(soonest, stops) {
 
   const minutes = formatMinutes(prediction.minutes).value;
   const route = prediction.routeId || "Route";
-  const headsign = prediction.tripHeadSign || prediction.directionText || stop.name;
-
-  bestRouteValue.textContent = `${route} to ${headsign} in ${minutes} min from ${stop.name}`;
+  bestRouteValue.textContent = `${stop.name} • ${route} • ${minutes} min`;
 }
 
 function applyCatVariant(element, stopId) {
