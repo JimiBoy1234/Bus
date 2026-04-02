@@ -1,4 +1,5 @@
 const board = document.getElementById("board");
+const bestRouteValue = document.getElementById("best-route-value");
 const statusPill = document.getElementById("status-pill");
 const refreshButton = document.getElementById("refresh-button");
 const stopTemplate = document.getElementById("stop-template");
@@ -44,12 +45,16 @@ async function loadPredictions() {
         vehicles: mapData.vehicles || []
       };
 
-      if (selectedStopId) {
-        renderMapForStop(selectedStopId);
+      if (selectedStopId && openInlineMap?.wrap) {
+        const inlineMapRoot = openInlineMap.wrap.querySelector(".inline-map");
+        renderMapForStop(selectedStopId, openInlineMap.wrap, inlineMapRoot);
       }
     }
   } catch (error) {
     board.innerHTML = `<div class="empty-state">Unable to load WMATA data. ${escapeHtml(error.message)}</div>`;
+    if (bestRouteValue) {
+      bestRouteValue.textContent = "Live data unavailable";
+    }
     statusPill.textContent = "Live data unavailable";
   } finally {
     refreshButton.disabled = false;
@@ -59,6 +64,7 @@ async function loadPredictions() {
 function renderStops(stops) {
   board.innerHTML = "";
   const soonest = getSoonestPrediction(stops);
+  updateBestRoute(soonest, stops);
 
   for (const stop of stops) {
     const fragment = stopTemplate.content.cloneNode(true);
@@ -303,6 +309,31 @@ function isExcludedFromWalkLogic(stopId) {
 
 function getVisiblePredictionCount() {
   return MOBILE_MEDIA.matches ? 2 : 4;
+}
+
+function updateBestRoute(soonest, stops) {
+  if (!bestRouteValue) {
+    return;
+  }
+
+  if (!soonest) {
+    bestRouteValue.textContent = "No walkable arrivals right now";
+    return;
+  }
+
+  const stop = stops.find((item) => item.id === soonest.stopId);
+  const prediction = stop?.predictions?.[soonest.predictionIndex];
+
+  if (!stop || !prediction) {
+    bestRouteValue.textContent = "No walkable arrivals right now";
+    return;
+  }
+
+  const minutes = formatMinutes(prediction.minutes).value;
+  const route = prediction.routeId || "Route";
+  const headsign = prediction.tripHeadSign || prediction.directionText || stop.name;
+
+  bestRouteValue.textContent = `${route} to ${headsign} in ${minutes} min from ${stop.name}`;
 }
 
 function applyCatVariant(element, stopId) {

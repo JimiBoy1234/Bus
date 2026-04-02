@@ -183,6 +183,33 @@ body {
   line-height: 1;
 }
 
+.best-route-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 14px 18px;
+  border: 1px solid rgba(47, 138, 65, 0.2);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(229, 247, 232, 0.92), rgba(243, 252, 244, 0.97));
+  box-shadow: var(--shadow);
+}
+
+.best-route-label,
+.best-route-value {
+  margin: 0;
+}
+
+.best-route-label {
+  color: var(--green-ink);
+  font-weight: 700;
+}
+
+.best-route-value {
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
 .leaflet-popup-content {
   font-family: "Baloo 2", "Space Grotesk", sans-serif;
 }
@@ -464,6 +491,13 @@ body {
 
   .cat-button {
     justify-content: center;
+  }
+
+  .best-route-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 12px 14px;
   }
 
   .stop-header {
