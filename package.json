@@ -1,0 +1,9 @@
+{
+  "name": "wmata-bus-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple live WMATA bus stop dashboard",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
