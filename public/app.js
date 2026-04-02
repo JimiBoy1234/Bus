@@ -76,13 +76,13 @@ function renderStops(stops) {
       predictionList.innerHTML =
         '<div class="empty-state">No active arrival predictions right now.</div>';
     } else {
-      for (const prediction of stop.predictions.slice(0, 4)) {
+      stop.predictions.slice(0, 4).forEach((prediction, index) => {
         const predictionCard = buildPrediction(prediction);
-        if (soonest && stop.id === soonest.stopId && prediction.vehicleId === soonest.vehicleId && prediction.routeId === soonest.routeId) {
+        if (soonest && stop.id === soonest.stopId && index === soonest.predictionIndex) {
           predictionCard.classList.add("is-soonest");
         }
         predictionList.appendChild(predictionCard);
-      }
+      });
     }
 
     mapButton.addEventListener("click", () => {
@@ -107,6 +107,7 @@ function buildPrediction(prediction) {
     <div>
       <p class="prediction-route">${route}</p>
       <p class="prediction-meta">${headsign}${vehicleId ? ` • Bus ${vehicleId}` : ""}</p>
+      ${buildWalkWarning(prediction.minutes)}
     </div>
     <div class="prediction-minutes">
       <span class="minutes-value">${minutes.value}</span>
@@ -171,7 +172,7 @@ function renderInlineMap(mapRoot, stops, vehicles, focusStop) {
   mapRoot.innerHTML = "";
   const map = L.map(mapRoot, {
     scrollWheelZoom: false,
-    zoomControl: false
+    zoomControl: true
   });
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -246,25 +247,34 @@ function getSoonestPrediction(stops) {
   let soonest = null;
 
   for (const stop of stops) {
-    for (const prediction of stop.predictions) {
+    stop.predictions.slice(0, 4).forEach((prediction, index) => {
       const minutes = normalizeMinutes(prediction.minutes);
 
       if (minutes === null) {
-        continue;
+        return;
       }
 
       if (!soonest || minutes < soonest.minutes) {
         soonest = {
           stopId: stop.id,
-          routeId: prediction.routeId,
-          vehicleId: prediction.vehicleId,
+          predictionIndex: index,
           minutes
         };
       }
-    }
+    });
   }
 
   return soonest;
+}
+
+function buildWalkWarning(minutesValue) {
+  const minutes = normalizeMinutes(minutesValue);
+
+  if (minutes === null || minutes >= 6) {
+    return "";
+  }
+
+  return '<p class="prediction-warning">* This bus departs sooner than you can walk there from your home. That walk takes at least 6 minutes.</p>';
 }
 
 function normalizeMinutes(value) {
