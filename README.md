@@ -5,6 +5,7 @@ Simple local dashboard for these WMATA stops:
 - `4000296` Mount Vernon Bookstore
 - `4001060` Rt1 to Potomac Yard
 - `4001061` Rt1 to Braddock
+- `4000258` Slater's Lane to DC
 
 ## Run it
 
