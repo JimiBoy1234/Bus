@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>W&amp;A Bus Stops, Next Buses</title>
+    <title>ANW Bus Stops, Next Buses</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Space+Grotesk:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     <link
@@ -21,11 +21,17 @@
   <body>
     <main class="shell">
       <section class="hero">
-        <h1>W&amp;A Bus Stops, Next Buses</h1>
+        <h1>ANW Bus Stops, Next Buses</h1>
         <div class="meta">
           <span id="status-pill" class="pill">Loading live data...</span>
-          <button id="refresh-button" class="refresh-button" type="button">
-            Refresh now
+          <button id="refresh-button" class="refresh-button cat-button" type="button" aria-label="Refresh now">
+            <span class="cat-tail" aria-hidden="true"></span>
+            <span class="cat-face" aria-hidden="true">
+              <span class="cat-ears"></span>
+              <span class="cat-eyes"></span>
+              <span class="cat-nose"></span>
+            </span>
+            <span class="cat-label">Refresh now</span>
           </button>
         </div>
       </section>

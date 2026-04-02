@@ -17,7 +17,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Space Grotesk", sans-serif;
+  font-family: "Baloo 2", "Space Grotesk", sans-serif;
   color: var(--ink);
   background:
     radial-gradient(circle at top left, rgba(200, 76, 9, 0.18), transparent 28%),
@@ -43,6 +43,7 @@ body {
 .hero h1 {
   margin: 0;
   max-width: 14ch;
+  font-family: "Baloo 2", "Space Grotesk", sans-serif;
   font-size: clamp(2.3rem, 8vw, 4.8rem);
   line-height: 0.94;
 }
@@ -72,6 +73,133 @@ body {
   border: none;
   background: var(--ink);
   color: #fff;
+}
+
+.cat-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 18px 12px 16px;
+  background: linear-gradient(180deg, #f4b860 0%, #dc8b36 100%);
+  color: #132a13;
+  box-shadow: 0 10px 24px rgba(200, 76, 9, 0.22);
+}
+
+.cat-button:active .cat-tail,
+.cat-button.is-wiggling .cat-tail {
+  animation: tail-wiggle 0.45s ease-in-out 1;
+}
+
+.cat-face {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border: 2px solid #132a13;
+  border-radius: 50%;
+  background: #fff3d9;
+}
+
+.cat-ears::before,
+.cat-ears::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #132a13;
+  background: #fff3d9;
+  transform: rotate(45deg);
+}
+
+.cat-ears::before {
+  left: 2px;
+}
+
+.cat-ears::after {
+  right: 2px;
+}
+
+.cat-eyes::before,
+.cat-eyes::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #132a13;
+}
+
+.cat-eyes::before {
+  left: 7px;
+}
+
+.cat-eyes::after {
+  right: 7px;
+}
+
+.cat-nose {
+  position: absolute;
+  left: 50%;
+  top: 15px;
+  width: 6px;
+  height: 4px;
+  background: #c84c09;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  transform: translateX(-50%);
+}
+
+.cat-tail {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+}
+
+.cat-tail::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 13px;
+  height: 18px;
+  border: 3px solid #132a13;
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 14px 0 0;
+  transform-origin: 20% 90%;
+}
+
+.cat-label {
+  font-family: "Baloo 2", "Space Grotesk", sans-serif;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@keyframes tail-wiggle {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(18deg);
+  }
+
+  50% {
+    transform: rotate(-14deg);
+  }
+
+  75% {
+    transform: rotate(12deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 .map-section {
@@ -107,7 +235,7 @@ body {
 }
 
 .leaflet-popup-content {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: "Baloo 2", "Space Grotesk", sans-serif;
 }
 
 .bus-icon {
@@ -128,6 +256,12 @@ body {
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.06em;
+}
+
+.stop-name,
+.map-copy h2,
+.prediction-route {
+  font-family: "Baloo 2", "Space Grotesk", sans-serif;
 }
 
 .board {
@@ -275,6 +409,10 @@ body {
   .refresh-button {
     width: 100%;
     text-align: center;
+  }
+
+  .cat-button {
+    justify-content: center;
   }
 
   .stop-header {

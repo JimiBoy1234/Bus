@@ -11,6 +11,7 @@ let stopMarkers = [];
 let vehicleMarkers = [];
 
 refreshButton.addEventListener("click", () => {
+  wiggleCatTail();
   loadPredictions();
 });
 
@@ -178,6 +179,20 @@ function buildVehiclePopup(vehicle) {
 
 function clearMarkers(markers) {
   markers.forEach((marker) => marker.remove());
+}
+
+function wiggleCatTail() {
+  if (!refreshButton) {
+    return;
+  }
+
+  refreshButton.classList.remove("is-wiggling");
+  void refreshButton.offsetWidth;
+  refreshButton.classList.add("is-wiggling");
+
+  window.setTimeout(() => {
+    refreshButton.classList.remove("is-wiggling");
+  }, 500);
 }
 
 function createBusIcon(vehicle) {
