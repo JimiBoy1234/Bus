@@ -1,9 +1,13 @@
 const board = document.getElementById("board");
+const mapRoot = document.getElementById("bus-map");
 const statusPill = document.getElementById("status-pill");
 const refreshButton = document.getElementById("refresh-button");
 const stopTemplate = document.getElementById("stop-template");
 
 const REFRESH_INTERVAL_MS = 30000;
+let map;
+let stopMarkers = [];
+let vehicleMarkers = [];
 
 refreshButton.addEventListener("click", () => {
   loadPredictions();
@@ -17,17 +21,30 @@ async function loadPredictions() {
   refreshButton.disabled = true;
 
   try {
-    const response = await fetch("/api/predictions");
-    const data = await response.json();
+    const [predictionResponse, mapResponse] = await Promise.all([
+      fetch("/api/predictions"),
+      fetch("/api/map-data")
+    ]);
+    const [predictionData, mapData] = await Promise.all([predictionResponse.json(), mapResponse.json()]);
 
-    if (!response.ok) {
-      throw new Error(data.error || "Request failed");
+    if (!predictionResponse.ok) {
+      throw new Error(predictionData.error || "Prediction request failed");
     }
 
-    renderStops(data.stops || []);
-    statusPill.textContent = `Updated ${formatTimestamp(data.updatedAt)}`;
+    renderStops(predictionData.stops || []);
+    statusPill.textContent = `Updated ${formatTimestamp(predictionData.updatedAt)}`;
+
+    if (mapResponse.ok) {
+      renderMap(mapData.stops || [], mapData.vehicles || []);
+    } else if (mapRoot) {
+      mapRoot.innerHTML =
+        '<div class="empty-state">Live map unavailable. Make sure WMATA Bus Route and Stop Methods is enabled for this API key.</div>';
+    }
   } catch (error) {
     board.innerHTML = `<div class="empty-state">Unable to load WMATA data. ${escapeHtml(error.message)}</div>`;
+    if (mapRoot) {
+      mapRoot.innerHTML = '<div class="empty-state">Map unavailable right now.</div>';
+    }
     statusPill.textContent = "Live data unavailable";
   } finally {
     refreshButton.disabled = false;
@@ -79,6 +96,88 @@ function buildPrediction(prediction) {
   `;
 
   return card;
+}
+
+function renderMap(stops, vehicles) {
+  if (!mapRoot || typeof L === "undefined") {
+    return;
+  }
+
+  const validStops = stops.filter((stop) => Number.isFinite(stop.lat) && Number.isFinite(stop.lon));
+
+  if (!validStops.length) {
+    mapRoot.innerHTML = '<div class="empty-state">Stop locations unavailable.</div>';
+    return;
+  }
+
+  if (!map) {
+    map = L.map(mapRoot, {
+      scrollWheelZoom: false
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+  }
+
+  clearMarkers(stopMarkers);
+  clearMarkers(vehicleMarkers);
+
+  stopMarkers = validStops.map((stop) => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 10,
+      color: "#132a13",
+      weight: 2,
+      fillColor: "#fffaf0",
+      fillOpacity: 1
+    }).addTo(map);
+
+    marker.bindPopup(
+      `<strong>${escapeHtml(stop.stopName || stop.name)}</strong><br />Stop ${escapeHtml(stop.id)}`
+    );
+
+    return marker;
+  });
+
+  const visibleVehicles = vehicles.filter((vehicle) => Number.isFinite(vehicle.lat) && Number.isFinite(vehicle.lon));
+
+  vehicleMarkers = visibleVehicles.map((vehicle) => {
+    const marker = L.circleMarker([vehicle.lat, vehicle.lon], {
+      radius: 8,
+      color: "#c84c09",
+      weight: 2,
+      fillColor: "#ffd3b8",
+      fillOpacity: 0.95
+    }).addTo(map);
+
+    marker.bindPopup(buildVehiclePopup(vehicle));
+    return marker;
+  });
+
+  const bounds = L.latLngBounds(validStops.map((stop) => [stop.lat, stop.lon]));
+
+  visibleVehicles.forEach((vehicle) => {
+    bounds.extend([vehicle.lat, vehicle.lon]);
+  });
+
+  map.fitBounds(bounds.pad(0.22));
+}
+
+function buildVehiclePopup(vehicle) {
+  const lines = [
+    `<strong>Route ${escapeHtml(vehicle.routeId || "")}</strong>`,
+    vehicle.tripHeadsign ? escapeHtml(vehicle.tripHeadsign) : escapeHtml(vehicle.directionText || ""),
+    vehicle.vehicleId ? `Bus ${escapeHtml(vehicle.vehicleId)}` : "",
+    vehicle.deviation === null || vehicle.deviation === undefined
+      ? ""
+      : `${escapeHtml(String(vehicle.deviation))} min off schedule`
+  ].filter(Boolean);
+
+  return lines.join("<br />");
+}
+
+function clearMarkers(markers) {
+  markers.forEach((marker) => marker.remove());
 }
 
 function formatMinutes(value) {

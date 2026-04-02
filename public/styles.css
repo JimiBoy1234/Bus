@@ -74,6 +74,42 @@ body {
   color: #fff;
 }
 
+.map-section {
+  margin-top: 22px;
+}
+
+.map-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.map-copy h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.map-copy p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.bus-map {
+  width: 100%;
+  height: 420px;
+  margin-top: 16px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(19, 42, 19, 0.08);
+}
+
+.leaflet-popup-content {
+  font-family: "Space Grotesk", sans-serif;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -199,6 +235,7 @@ body {
   }
 
   .hero,
+  .map-card,
   .stop-card {
     border-radius: 22px;
   }
@@ -227,6 +264,10 @@ body {
 
   .stop-name {
     font-size: 1.3rem;
+  }
+
+  .bus-map {
+    height: 340px;
   }
 
   .prediction {
