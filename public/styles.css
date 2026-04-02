@@ -520,6 +520,10 @@ body {
     padding: 12px 14px;
   }
 
+  .prediction > div:first-child {
+    display: contents;
+  }
+
   .prediction-minutes {
     text-align: left;
   }
@@ -542,9 +546,7 @@ body {
   }
 
   .prediction-meta {
-    margin-top: 2px;
-    font-size: 0.82rem;
-    line-height: 1.2;
+    display: none;
   }
 
   .prediction-warning {
