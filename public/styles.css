@@ -46,13 +46,6 @@ body {
   box-shadow: var(--shadow);
 }
 
-.cat-gallery {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
 .cat-sticker {
   width: 54px;
   height: 54px;
@@ -258,6 +251,27 @@ body {
   align-items: flex-start;
 }
 
+.stop-title-row,
+.inline-map-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stop-cat,
+.inline-map-cat {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background-color: #fff4ea;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 82%;
+  border: 1px solid rgba(210, 106, 79, 0.18);
+  box-shadow: 0 6px 14px rgba(210, 106, 79, 0.1);
+}
+
 .stop-label,
 .empty-state,
 .prediction-meta,
@@ -267,7 +281,7 @@ body {
 }
 
 .stop-label {
-  margin: 0 0 6px;
+  margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.75rem;
@@ -422,17 +436,6 @@ body {
   .hero,
   .stop-card {
     border-radius: 22px;
-  }
-
-  .cat-gallery {
-    justify-content: flex-start;
-    margin-bottom: 14px;
-  }
-
-  .cat-sticker {
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
   }
 
   .hero h1 {

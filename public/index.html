@@ -21,11 +21,6 @@
   <body>
     <main class="shell">
       <section class="hero">
-        <div class="cat-gallery" aria-hidden="true">
-          <div class="cat-sticker cat-sticker-sleep"></div>
-          <div class="cat-sticker cat-sticker-wave"></div>
-          <div class="cat-sticker cat-sticker-loaf"></div>
-        </div>
         <h1>A&amp;W Bus Stops - Next Buses</h1>
         <div class="meta">
           <span id="status-pill" class="pill">Loading live data...</span>
@@ -49,7 +44,10 @@
       <article class="stop-card">
         <div class="stop-header">
           <div>
-            <p class="stop-label"></p>
+            <div class="stop-title-row">
+              <span class="stop-cat" aria-hidden="true"></span>
+              <p class="stop-label"></p>
+            </div>
             <h2 class="stop-name"></h2>
             <p class="stop-note"></p>
           </div>
@@ -59,7 +57,10 @@
         <button class="map-link" type="button">View on map</button>
         <div class="inline-map-wrap is-hidden">
           <div class="inline-map-copy">
-            <p class="inline-map-title">Nearby live buses</p>
+            <div class="inline-map-title-row">
+              <span class="inline-map-cat" aria-hidden="true"></span>
+              <p class="inline-map-title">Nearby live buses</p>
+            </div>
             <p class="inline-map-subtitle">Focused on this stop and its active routes.</p>
           </div>
           <div class="inline-map"></div>

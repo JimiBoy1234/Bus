@@ -58,6 +58,8 @@ function renderStops(stops) {
 
   for (const stop of stops) {
     const fragment = stopTemplate.content.cloneNode(true);
+    const stopCat = fragment.querySelector(".stop-cat");
+    const inlineMapCat = fragment.querySelector(".inline-map-cat");
     fragment.querySelector(".stop-label").textContent = "Bus Stop";
     fragment.querySelector(".stop-name").textContent = stop.name;
     const stopNote = fragment.querySelector(".stop-note");
@@ -69,6 +71,8 @@ function renderStops(stops) {
     const mapButton = fragment.querySelector(".map-link");
     const inlineMapWrap = fragment.querySelector(".inline-map-wrap");
     const inlineMapRoot = fragment.querySelector(".inline-map");
+    applyCatVariant(stopCat, stop.id);
+    applyCatVariant(inlineMapCat, stop.id);
 
     const predictionList = fragment.querySelector(".prediction-list");
 
@@ -250,7 +254,7 @@ function getSoonestPrediction(stops) {
     stop.predictions.slice(0, 4).forEach((prediction, index) => {
       const minutes = normalizeMinutes(prediction.minutes);
 
-      if (minutes === null) {
+      if (minutes === null || minutes < 6) {
         return;
       }
 
@@ -274,7 +278,27 @@ function buildWalkWarning(minutesValue) {
     return "";
   }
 
-  return '<p class="prediction-warning">* This bus departs sooner than you can walk there from your home. That walk takes at least 6 minutes.</p>';
+  return '<p class="prediction-warning">* Not enough time to walk there.</p>';
+}
+
+function applyCatVariant(element, stopId) {
+  if (!element) {
+    return;
+  }
+
+  element.classList.remove("cat-sticker-sleep", "cat-sticker-wave", "cat-sticker-loaf");
+
+  if (stopId === "4000296") {
+    element.classList.add("cat-sticker-sleep");
+    return;
+  }
+
+  if (stopId === "4001060") {
+    element.classList.add("cat-sticker-wave");
+    return;
+  }
+
+  element.classList.add("cat-sticker-loaf");
 }
 
 function normalizeMinutes(value) {
