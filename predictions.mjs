@@ -148,6 +148,7 @@ async function fetchBusPositionsForRoute(routeId, apiKey) {
     tripId: bus.TripID || "",
     directionText: bus.DirectionText || "",
     tripHeadsign: bus.TripHeadsign || "",
+    heading: Number(bus.Heading),
     lat: Number(bus.Lat),
     lon: Number(bus.Lon),
     deviation: bus.Deviation ?? null,

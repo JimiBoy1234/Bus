@@ -5,6 +5,7 @@ const refreshButton = document.getElementById("refresh-button");
 const stopTemplate = document.getElementById("stop-template");
 
 const REFRESH_INTERVAL_MS = 30000;
+const MAP_RADIUS_MILES = 2;
 let map;
 let stopMarkers = [];
 let vehicleMarkers = [];
@@ -140,14 +141,13 @@ function renderMap(stops, vehicles) {
   });
 
   const visibleVehicles = vehicles.filter((vehicle) => Number.isFinite(vehicle.lat) && Number.isFinite(vehicle.lon));
+  const nearbyVehicles = visibleVehicles.filter((vehicle) =>
+    validStops.some((stop) => distanceInMiles(stop.lat, stop.lon, vehicle.lat, vehicle.lon) <= MAP_RADIUS_MILES)
+  );
 
-  vehicleMarkers = visibleVehicles.map((vehicle) => {
-    const marker = L.circleMarker([vehicle.lat, vehicle.lon], {
-      radius: 8,
-      color: "#c84c09",
-      weight: 2,
-      fillColor: "#ffd3b8",
-      fillOpacity: 0.95
+  vehicleMarkers = nearbyVehicles.map((vehicle) => {
+    const marker = L.marker([vehicle.lat, vehicle.lon], {
+      icon: createBusIcon(vehicle)
     }).addTo(map);
 
     marker.bindPopup(buildVehiclePopup(vehicle));
@@ -156,7 +156,7 @@ function renderMap(stops, vehicles) {
 
   const bounds = L.latLngBounds(validStops.map((stop) => [stop.lat, stop.lon]));
 
-  visibleVehicles.forEach((vehicle) => {
+  nearbyVehicles.forEach((vehicle) => {
     bounds.extend([vehicle.lat, vehicle.lon]);
   });
 
@@ -178,6 +178,62 @@ function buildVehiclePopup(vehicle) {
 
 function clearMarkers(markers) {
   markers.forEach((marker) => marker.remove());
+}
+
+function createBusIcon(vehicle) {
+  const rotation = Number.isFinite(vehicle.heading) ? vehicle.heading : 0;
+  const routeLabel = escapeHtml(String(vehicle.routeId || "").slice(0, 4) || "BUS");
+
+  return L.divIcon({
+    className: "",
+    html: `
+      <div class="bus-icon" style="transform: rotate(${rotation}deg); transform-origin: 50% 50%;">
+        <svg viewBox="0 0 44 44" aria-hidden="true">
+          <g transform="translate(22 22)">
+            <path
+              d="M 0 -18 L 12 -6 L 12 10 C 12 14 9 17 5 17 L -5 17 C -9 17 -12 14 -12 10 L -12 -6 Z"
+              fill="#c84c09"
+              stroke="#132a13"
+              stroke-width="2"
+            />
+            <path
+              d="M -7 -4 H 7 V 5 H -7 Z"
+              fill="#fffaf0"
+            />
+            <circle cx="-6" cy="13" r="3" fill="#132a13" />
+            <circle cx="6" cy="13" r="3" fill="#132a13" />
+            <path d="M 0 -20 L 4 -12 H -4 Z" fill="#132a13" />
+            <text
+              x="0"
+              y="1"
+              text-anchor="middle"
+              fill="#132a13"
+              class="bus-icon-label"
+              transform="rotate(${rotation * -1})"
+            >${routeLabel}</text>
+          </g>
+        </svg>
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -16]
+  });
+}
+
+function distanceInMiles(lat1, lon1, lat2, lon2) {
+  const earthRadiusMiles = 3958.8;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) ** 2;
+
+  return 2 * earthRadiusMiles * Math.asin(Math.sqrt(a));
+}
+
+function toRadians(value) {
+  return (value * Math.PI) / 180;
 }
 
 function formatMinutes(value) {
