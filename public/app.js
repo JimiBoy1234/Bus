@@ -19,14 +19,6 @@ refreshButton.addEventListener("click", () => {
   loadPredictions();
 });
 
-const dashInfoToggle = document.getElementById("dash-info-toggle");
-const dashInfoPanel = document.getElementById("dash-info-panel");
-if (dashInfoToggle && dashInfoPanel) {
-  dashInfoToggle.addEventListener("click", () => {
-    const isHidden = dashInfoPanel.classList.toggle("is-hidden");
-    dashInfoToggle.setAttribute("aria-expanded", String(!isHidden));
-  });
-}
 
 loadPredictions();
 setInterval(loadPredictions, REFRESH_INTERVAL_MS);
@@ -636,23 +628,19 @@ function computeDashOptions(stops) {
 }
 
 function updateDashComparison(options) {
-  const el = document.getElementById("dash-comparison");
+  const el = document.getElementById("dash-comparison-value");
   if (!el) return;
 
   const catchable = options.filter((o) => o.catchable);
 
   if (!catchable.length) {
-    el.innerHTML = '<p class="dash-comparison-text">No catchable DASH buses right now.</p>';
+    el.textContent = "No catchable buses right now";
     return;
   }
 
   const best = catchable.reduce((a, b) => (a.totalMinutes <= b.totalMinutes ? a : b));
   const other = catchable.find((o) => o.stopId !== best.stopId);
-  const otherText = other ? ` · ${other.totalMinutes} min via ${escapeHtml(other.stop.name)}` : "";
+  const otherText = other ? ` (vs ${other.totalMinutes} min via ${other.stop.name})` : "";
 
-  el.innerHTML = `
-    <p class="dash-comparison-label">Better option right now</p>
-    <p class="dash-comparison-value">${escapeHtml(best.config.label)}</p>
-    <p class="dash-comparison-detail">${best.totalMinutes} min home · ${best.busWait} min wait + ${best.config.rideMinutes} min ride${escapeHtml(otherText)}</p>
-  `;
+  el.textContent = `${best.stop.name} • ${best.totalMinutes} min home${otherText}`;
 }

@@ -36,7 +36,7 @@
       </section>
 
       <section class="best-route-bar" aria-live="polite">
-        <p class="best-route-label">Your best route is:</p>
+        <p class="best-route-label">Your best route going to work is:</p>
         <p id="best-route-value" class="best-route-value">Checking live arrivals...</p>
       </section>
 
@@ -45,34 +45,9 @@
       </section>
 
       <section class="dash-section">
-        <div class="dash-section-header">
-          <h2 class="dash-section-title">DASH Bus</h2>
-          <button class="info-button" id="dash-info-toggle" type="button" aria-expanded="false" aria-controls="dash-info-panel">
-            <span aria-hidden="true">ⓘ</span>
-            <span class="sr-only">How this works</span>
-          </button>
-        </div>
-        <div class="info-panel is-hidden" id="dash-info-panel">
-          <p class="info-panel-heading">How the comparison works</p>
-          <p class="info-panel-body">All times are measured from right now. The recommended stop is whichever gets you home soonest.</p>
-          <ul class="info-panel-list">
-            <li>
-              <strong>Potomac Yard (stop 4001111)</strong><br />
-              5 min walk → bus wait → 10 min ride home.<br />
-              Bus must be ≥ 5 min away to catch it.<br />
-              <em>Total = bus arrival + 10 min</em>
-            </li>
-            <li>
-              <strong>Braddock Road (stop 4000469)</strong><br />
-              5 min extra on Metro + 3 min walk → bus wait → 20 min ride home.<br />
-              Bus must be ≥ 8 min away to catch it.<br />
-              <em>Total = bus arrival + 20 min</em>
-            </li>
-          </ul>
-          <p class="info-panel-formula">Total time home = bus arrival (min from now) + ride time</p>
-        </div>
-        <div class="dash-comparison" id="dash-comparison" aria-live="polite">
-          <p class="dash-comparison-text">Loading DASH data…</p>
+        <div class="best-route-bar" aria-live="polite">
+          <p class="best-route-label">Your best route coming home is:</p>
+          <p id="dash-comparison-value" class="best-route-value">Checking live arrivals...</p>
         </div>
         <div id="dash-board" class="board" aria-live="polite"></div>
       </section>
