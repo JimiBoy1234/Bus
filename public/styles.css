@@ -261,8 +261,8 @@ body {
 .stop-cat,
 .inline-map-cat {
   display: inline-block;
-  width: 32px;
-  height: 32px;
+  width: 46px;
+  height: 46px;
   border-radius: 12px;
   background-color: #fff4ea;
   background-repeat: no-repeat;
@@ -270,6 +270,11 @@ body {
   background-size: 82%;
   border: 1px solid rgba(210, 106, 79, 0.18);
   box-shadow: 0 6px 14px rgba(210, 106, 79, 0.1);
+  flex: 0 0 46px;
+}
+
+.stop-title-block {
+  min-width: 0;
 }
 
 .stop-label,
@@ -288,9 +293,10 @@ body {
 }
 
 .stop-name {
-  margin: 0;
+  margin: 4px 0 0;
   font-size: 1.5rem;
   line-height: 1.05;
+  max-width: 12ch;
 }
 
 .stop-note {
@@ -466,6 +472,7 @@ body {
 
   .stop-name {
     font-size: 1.3rem;
+    max-width: none;
   }
 
   .inline-map {

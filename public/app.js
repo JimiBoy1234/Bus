@@ -335,6 +335,10 @@ function createBusIcon(vehicle) {
         <svg viewBox="0 0 52 52" aria-hidden="true">
           <g transform="translate(26 26)">
             <path
+              d="M 0 -27 L 8 -17 H 4 V -9 H -4 V -17 H -8 Z"
+              fill="#d26a4f"
+            />
+            <path
               d="M 0 -22 L 5 -14 H -5 Z"
               fill="#3d2a22"
             />

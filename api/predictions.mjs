@@ -1,7 +1,8 @@
 const STOPS = [
   { id: "4000296", name: "Mount Vernon Bookstore" },
   { id: "4001060", name: "Rt1 to Potomac Yard" },
-  { id: "4001061", name: "Rt1 to Braddock" }
+  { id: "4001061", name: "Rt1 to Braddock" },
+  { id: "4000258", name: "Slater's Lane to DC" }
 ];
 let stopLocationCache = null;
 
