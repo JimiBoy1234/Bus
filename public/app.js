@@ -7,6 +7,10 @@ const stopTemplate = document.getElementById("stop-template");
 const REFRESH_INTERVAL_MS = 30000;
 const MAP_RADIUS_MILES = 2;
 const MOBILE_MEDIA = window.matchMedia("(max-width: 640px)");
+const DASH_STOP_CONFIG = {
+  "4001111": { walkMinutes: 5, rideMinutes: 10, extraTrainMinutes: 0, label: "Get off at Potomac Yard" },
+  "4000469": { walkMinutes: 3, rideMinutes: 20, extraTrainMinutes: 5, label: "Continue to Braddock Road" }
+};
 let latestMapData = { stops: [], vehicles: [] };
 let selectedStopId = null;
 let openInlineMap = null;
@@ -14,6 +18,15 @@ let openInlineMap = null;
 refreshButton.addEventListener("click", () => {
   loadPredictions();
 });
+
+const dashInfoToggle = document.getElementById("dash-info-toggle");
+const dashInfoPanel = document.getElementById("dash-info-panel");
+if (dashInfoToggle && dashInfoPanel) {
+  dashInfoToggle.addEventListener("click", () => {
+    const isHidden = dashInfoPanel.classList.toggle("is-hidden");
+    dashInfoToggle.setAttribute("aria-expanded", String(!isHidden));
+  });
+}
 
 loadPredictions();
 setInterval(loadPredictions, REFRESH_INTERVAL_MS);
@@ -24,6 +37,8 @@ MOBILE_MEDIA.addEventListener("change", () => {
 async function loadPredictions() {
   statusPill.textContent = "Refreshing live data...";
   refreshButton.disabled = true;
+
+  const dashFetch = fetch("/api/dash-predictions");
 
   try {
     const [predictionResponse, mapResponse] = await Promise.all([
@@ -66,6 +81,14 @@ async function loadPredictions() {
   } finally {
     refreshButton.disabled = false;
   }
+
+  try {
+    const dashResponse = await dashFetch;
+    if (dashResponse.ok) {
+      const dashData = await dashResponse.json();
+      renderDashStops(dashData.stops || []);
+    }
+  } catch (_) {}
 }
 
 function renderStops(stops) {
@@ -501,4 +524,135 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function renderDashStops(stops) {
+  const dashBoard = document.getElementById("dash-board");
+  if (!dashBoard) return;
+  dashBoard.innerHTML = "";
+
+  const options = computeDashOptions(stops);
+  updateDashComparison(options);
+
+  for (const option of options) {
+    const { stop, config, catchable, busWait, totalMinutes } = option;
+    const fragment = stopTemplate.content.cloneNode(true);
+
+    fragment.querySelector(".stop-label").textContent = "DASH Bus Stop";
+    fragment.querySelector(".stop-name").textContent = stop.name;
+    fragment.querySelector(".stop-id").textContent = `Stop ${stop.id}`;
+
+    const stopNote = fragment.querySelector(".stop-note");
+    stopNote.textContent = config.extraTrainMinutes > 0
+      ? `${config.extraTrainMinutes} min Metro + ${config.walkMinutes} min walk · ${config.rideMinutes} min ride home`
+      : `${config.walkMinutes} min walk · ${config.rideMinutes} min ride home`;
+    stopNote.hidden = false;
+
+    applyCatVariant(fragment.querySelector(".stop-cat"), stop.id);
+    applyCatVariant(fragment.querySelector(".inline-map-cat"), stop.id);
+
+    const predictionList = fragment.querySelector(".prediction-list");
+    if (!stop.predictions.length) {
+      predictionList.innerHTML = '<div class="empty-state">No active arrival predictions right now.</div>';
+    } else {
+      stop.predictions.slice(0, getVisiblePredictionCount()).forEach((prediction) => {
+        predictionList.appendChild(buildDashPrediction(prediction, config));
+      });
+    }
+
+    const totalTimeEl = document.createElement("div");
+    totalTimeEl.className = "stop-total-time";
+    if (catchable) {
+      totalTimeEl.innerHTML = `<span class="stop-total-time-value">~${totalMinutes} min home</span><span class="stop-total-time-detail"> · ${busWait} min wait + ${config.rideMinutes} min ride</span>`;
+    } else {
+      const minRequired = config.extraTrainMinutes + config.walkMinutes;
+      totalTimeEl.innerHTML = `<span class="stop-total-time-uncatchable">No catchable bus — need ≥ ${minRequired} min away</span>`;
+    }
+
+    const mapButton = fragment.querySelector(".map-link");
+    mapButton.before(totalTimeEl);
+    mapButton.hidden = true;
+    fragment.querySelector(".inline-map-wrap").hidden = true;
+
+    dashBoard.appendChild(fragment);
+  }
+}
+
+function buildDashPrediction(prediction, config) {
+  const card = document.createElement("div");
+  card.className = "prediction";
+
+  const route = escapeHtml(prediction.routeId || "Route");
+  const headsign = escapeHtml(prediction.tripHeadSign || prediction.directionText || "");
+  const vehicleId = escapeHtml(prediction.vehicleId || "");
+  const minutes = formatMinutes(prediction.minutes);
+  const minRequired = config.extraTrainMinutes + config.walkMinutes;
+  const mins = normalizeMinutes(prediction.minutes);
+  const warning = mins !== null && mins < minRequired
+    ? `<p class="prediction-warning">* Need ≥ ${minRequired} min to get there.</p>`
+    : "";
+
+  card.innerHTML = `
+    <div>
+      <p class="prediction-route">${route}${headsign ? ` • ${headsign}` : ""}</p>
+      <p class="prediction-meta">${vehicleId ? `Bus ${vehicleId}` : ""}</p>
+      ${warning}
+    </div>
+    <div class="prediction-minutes">
+      <span class="minutes-value">${minutes.value}</span>
+      <span class="minutes-label">${minutes.label}</span>
+    </div>
+  `;
+
+  return card;
+}
+
+function computeDashOptions(stops) {
+  return stops.map((stop) => {
+    const config = DASH_STOP_CONFIG[stop.id];
+    if (!config) return null;
+
+    const minRequired = config.extraTrainMinutes + config.walkMinutes;
+    const nextBus = stop.predictions.find((p) => {
+      const mins = normalizeMinutes(p.minutes);
+      return mins !== null && mins >= minRequired;
+    });
+
+    if (!nextBus) {
+      return { stopId: stop.id, stop, config, catchable: false };
+    }
+
+    const busWait = normalizeMinutes(nextBus.minutes);
+    return {
+      stopId: stop.id,
+      stop,
+      config,
+      catchable: true,
+      busWait,
+      totalMinutes: busWait + config.rideMinutes,
+      nextBus
+    };
+  }).filter(Boolean);
+}
+
+function updateDashComparison(options) {
+  const el = document.getElementById("dash-comparison");
+  if (!el) return;
+
+  const catchable = options.filter((o) => o.catchable);
+
+  if (!catchable.length) {
+    el.innerHTML = '<p class="dash-comparison-text">No catchable DASH buses right now.</p>';
+    return;
+  }
+
+  const best = catchable.reduce((a, b) => (a.totalMinutes <= b.totalMinutes ? a : b));
+  const other = catchable.find((o) => o.stopId !== best.stopId);
+  const otherText = other ? ` · ${other.totalMinutes} min via ${escapeHtml(other.stop.name)}` : "";
+
+  el.innerHTML = `
+    <p class="dash-comparison-label">Better option right now</p>
+    <p class="dash-comparison-value">${escapeHtml(best.config.label)}</p>
+    <p class="dash-comparison-detail">${best.totalMinutes} min home · ${best.busWait} min wait + ${best.config.rideMinutes} min ride${escapeHtml(otherText)}</p>
+  `;
 }
